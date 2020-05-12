@@ -321,9 +321,30 @@ impl Config {
             .build()
             .unwrap(); // FIXME don't unwrap
 
+        let handle: tokio::runtime::Handle = runtime.handle().clone();
+
         let (client, connection) = runtime.block_on(self.config.connect(tls))?;
 
-        let connection = Connection::new(runtime, connection);
+        let connection = Connection::new(handle, connection);
+        Ok(Client::new(connection, client))
+    }
+
+    /// Opens a connection to a PostgreSQL database, using
+    /// externally supplied tokio::runtime::Handle.
+    pub fn connect_with_handle<T>(
+        &self,
+        tls: T,
+        handle: tokio::runtime::Handle,
+    ) -> Result<Client, Error>
+    where
+        T: MakeTlsConnect<Socket> + 'static + Send,
+        T::TlsConnect: Send,
+        T::Stream: Send,
+        <T::TlsConnect as TlsConnect<Socket>>::Future: Send,
+    {
+        let (client, connection) = handle.block_on(self.config.connect(tls))?;
+
+        let connection = Connection::new(handle, connection);
         Ok(Client::new(connection, client))
     }
 }

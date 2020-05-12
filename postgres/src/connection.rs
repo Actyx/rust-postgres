@@ -8,17 +8,17 @@ use std::ops::{Deref, DerefMut};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 use tokio::io::{AsyncRead, AsyncWrite};
-use tokio::runtime::Runtime;
+use tokio::runtime::Handle;
 use tokio_postgres::AsyncMessage;
 
 pub struct Connection {
-    runtime: Runtime,
+    runtime: Handle,
     connection: Pin<Box<dyn Stream<Item = Result<AsyncMessage, Error>> + Send>>,
     notifications: VecDeque<Notification>,
 }
 
 impl Connection {
-    pub fn new<S, T>(runtime: Runtime, connection: tokio_postgres::Connection<S, T>) -> Connection
+    pub fn new<S, T>(runtime: Handle, connection: tokio_postgres::Connection<S, T>) -> Connection
     where
         S: AsyncRead + AsyncWrite + Unpin + 'static + Send,
         T: AsyncRead + AsyncWrite + Unpin + 'static + Send,
