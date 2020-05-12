@@ -33,6 +33,28 @@ impl Client {
         params.parse::<Config>()?.connect(tls_mode)
     }
 
+    /// A convenience function which parses a configuration string into a `Config` and then connects to the database.
+    /// This one allows passing a tokio::runtime::Handle
+    ///
+    /// See the documentation for [`Config`] for information about the connection syntax.
+    ///
+    /// [`Config`]: config/struct.Config.html
+    pub fn connect_with_handle<T>(
+        params: &str,
+        tls_mode: T,
+        handle: tokio::runtime::Handle,
+    ) -> Result<Client, Error>
+    where
+        T: MakeTlsConnect<Socket> + 'static + Send,
+        T::TlsConnect: Send,
+        T::Stream: Send,
+        <T::TlsConnect as TlsConnect<Socket>>::Future: Send,
+    {
+        params
+            .parse::<Config>()?
+            .connect_with_handle(tls_mode, handle)
+    }
+
     /// Returns a new `Config` object which can be used to configure and connect to a database.
     pub fn configure() -> Config {
         Config::new()
